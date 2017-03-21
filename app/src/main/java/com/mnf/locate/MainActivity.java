@@ -20,6 +20,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.TextViewCompat;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,10 +31,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -73,9 +76,11 @@ public class MainActivity extends AppCompatActivity
     private static DatabaseReference mDatabase;
     private GoogleMap mMap;
 
-    private DatabaseReference mDatabseReference;
+    private DatabaseReference mDatabseReference,messageReferance;
     private FirebaseDatabase mFirebaseDatabase;
     private ChildEventListener mChildEventListener;
+    Button showMessage;
+    TextView tvMsg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +89,9 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);*/
         setContentView(R.layout.activity_real_maps);
+        showMessage = (Button) findViewById(R.id.button2);
+        tvMsg = (TextView) findViewById(R.id.msg);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -96,7 +104,7 @@ public class MainActivity extends AppCompatActivity
         locationService = new Intent(this, BackgroundService.class);
 
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user!=null) {
         if(user.getUid()!=null) {
             user_id = user.getUid();
@@ -112,8 +120,28 @@ public class MainActivity extends AppCompatActivity
             mFirebaseDatabase = FirebaseDatabase.getInstance();
 
             mDatabseReference = mFirebaseDatabase.getReference().child("location");
+            messageReferance = mFirebaseDatabase.getReference().child("message");
+            messageReferance.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.e("TAG","ondata change msg = "+dataSnapshot.getValue());
+                    if(dataSnapshot.getValue()!=null)
+                    tvMsg.setText(dataSnapshot.getValue().toString());
+                }
 
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
             defineEventListener();
+            showMessage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Log.e("TAG","message btn");
+                    showDialogue(user.getDisplayName());
+                }
+            });
 
         }
         }else{
@@ -142,7 +170,7 @@ public class MainActivity extends AppCompatActivity
                             mMap.addMarker(new MarkerOptions().position(user).icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(name))));
                           //  moveToCurrentLocation(mMap,user);
                            // mMap.animateCamera(CameraUpdateFactory.zoomTo(15), 2000, null);
-                            mMap.moveCamera(CameraUpdateFactory.newLatLng(user));
+                           // mMap.moveCamera(CameraUpdateFactory.newLatLng(user));
                             mMap.setBuildingsEnabled(true);
                             mMap.setTrafficEnabled(true);
 
@@ -170,6 +198,26 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+
+
+    public void showDialogue(String user){
+        new MaterialDialog.Builder(this)
+                .title("Enter Message")
+                .content("message content")
+                .inputType(InputType.TYPE_CLASS_TEXT)
+                .input("message", user+" : ", new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(MaterialDialog dialog, CharSequence input) {
+                        // Do something
+                        Log.e("TAG","input "+input);
+                        saveMsg(input.toString());
+                    }
+                }).show();
+    }
+
+    public void  saveMsg(String msg){
+        mDatabase.child("message").setValue(msg);
+    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Log.e("Tag", "onMapReady ");
@@ -245,10 +293,11 @@ public class MainActivity extends AppCompatActivity
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                    Log.e("TAG","Permission granded");
                     // permission was granted, yay! Do the task you need to do.
 
                 } else {
+                    Log.e("TAG","Permission denied");
 
                     // permission denied, boo! Disable the functionality that depends on this permission.
                 }
@@ -338,7 +387,7 @@ public class MainActivity extends AppCompatActivity
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
-                Log.e("TAG","permission if ");
+                Log.e("TAG","permission if not granded");
 
 
 
@@ -348,6 +397,8 @@ public class MainActivity extends AppCompatActivity
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClientB, mLocationRequestB, this);
 
             }
+            //LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClientB, mLocationRequestB, this);
+
 
         }
 

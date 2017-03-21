@@ -9,12 +9,22 @@
     <!-- TODO: Update blank fragment layout -->
 
 
+
+    <!--
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
         android:id="@+id/recycle_main_menu"
         android:layout_marginTop="10dp"
         android:layout_height="match_parent">
-    </android.support.v7.widget.RecyclerView>
+    </android.support.v7.widget.RecyclerView> -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="Loading..."
+        android:textColor="@color/grey700"
+        android:gravity="center"
+        android:textSize="20dp"
+        />
 
 
 

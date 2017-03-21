@@ -1,9 +1,12 @@
 package com.mnf.locate.activity;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -41,6 +44,7 @@ public class HomeActivity extends AppCompatActivity {
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mFirebaseAuthStateListener;
     private static final int RC_SIGN_IN = 1;
+    Context cont;
 
 
     @Override
@@ -48,6 +52,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         c = getApplicationContext();
+        cont = this;
 
 
         mFirebaseAuth = FirebaseAuth.getInstance();
@@ -59,13 +64,15 @@ public class HomeActivity extends AppCompatActivity {
                 if(user != null){
                     //user logged in
                     //setAccountVisibility(true);
+                    ActivityCompat.requestPermissions((Activity) cont,
+                            new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                            1);
                     Log.e("HomeActivity","user is = "+user.getUid());
-                    Intent mainAct = new Intent(HomeActivity.this,MainActivity.class);
-                    startActivity(mainAct);
+
                 }else{
                     Log.e("HomeActivity","user is not logged in  ");
 
-                    Toast.makeText(getApplicationContext(),"Not cool bro, not cool.  Login first",Toast.LENGTH_LONG).show();
+                   // Toast.makeText(getApplicationContext(),"Not cool bro, not cool.  Login first",Toast.LENGTH_LONG).show();
                     //user logged out
                     //  dettachView();
 
@@ -174,6 +181,28 @@ public class HomeActivity extends AppCompatActivity {
                         .build(),
                 RC_SIGN_IN);
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.e("TAG","Permission granded");
+                    // permission was granted, yay! Do the task you need to do.
+                    Intent mainAct = new Intent(HomeActivity.this,MainActivity.class);
+                    startActivity(mainAct);
+                } else {
+                    Log.e("TAG","Permission denied");
+                    // Toast.makeText(getApplicationContext(),"Not Permission, No Map",Toast.LENGTH_LONG).show();
+
+                    // permission denied, boo! Disable the functionality that depends on this permission.
+                }
+                return;
+            }
+        }
     }
 
     @Override
